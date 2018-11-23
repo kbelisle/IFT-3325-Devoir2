@@ -1,5 +1,9 @@
 package com.Devoir2.HDLC;
 
+import java.io.*;
+import java.util.Date;
+import java.net.*;
+
 public class Receiver {
 	/*Attributes*/
 	boolean connected;
@@ -27,21 +31,21 @@ public class Receiver {
 	        // Simple logic loop
 	                connected=false;
 	        while(true) {
-	        	Trame trame =waitForFrame();
+	        	Frame frame =waitForFrame();
 	        	String message="N";
-	        	if(trame.isValid())
-	        	    message=trame.getMessage();
+	        	if(frame.isValid())
+	        	    message=frame.getMessage();
 	        	if("F0".equals(message))
 	        	    break;
 	        	if(("I").equals(message.substring(0, 1))) {
 	        		if(message.length()>2&&(""+next).equals(message.substring(1, 2))){
 	        		    txt+=message.substring(2);//save
-	        		    output.writeUTF(new Trame("A"+next,true).getTrame());
+	        		    output.writeUTF(new Frame("A"+next,true).getFrame());
 	        		    next++;
 	        		}else
-	        			output.writeUTF(new Trame("R"+next,true).getTrame());
+	        			output.writeUTF(new Frame("R"+next,true).getFrame());
 	        	}else
-	        	    output.writeUTF(new Trame("A"+next,true).getTrame());
+	        	    output.writeUTF(new Frame("A"+next,true).getFrame());
 	        }
 	        
 	        // Save file
@@ -61,19 +65,21 @@ public class Receiver {
 			return;
 		}
 	}
-	}
 	/*Methods*/
 	public Frame waitForFrame() {
+		try {
 		timer=(new Date()).getTime();
 	        while(input.available()<1) {
 	            long tmp=(new Date()).getTime();
 	            if(tmp-timer>=3000) {
 	            	if(connected) {
 	    	            System.out.println("sending A"+next);
-	            	    output.writeUTF(new Trame("A"+next,true).getTrame());
+	            	    output.writeUTF(new Frame("A"+next,true).getFrame());
 	            	}
 	        	timer=tmp;
 	            }
 	        }
+	        return new Frame(input.readUTF(),false);
+		}catch(Exception e) {return new Frame("N0",true);}
 	}
 }
