@@ -1,5 +1,9 @@
 package com.Devoir2.Test;
 
-public class Scenario {
+import com.Devoir2.HDLC.*;
 
+public class Scenario {
+	public static void main(String[] args) {
+		
+	}
 }

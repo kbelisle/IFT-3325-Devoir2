@@ -12,7 +12,10 @@ public class Main {
 			}
 			try {
 				int port = Integer.parseInt(args[2]);
-				new Sender(args[1],port,args[3]);
+				Sender s = new Sender(args[1],port,args[3]);
+				s.connect();
+				s.send();
+				s.disconnect();
 				System.out.println("Sender process ended.");
 			}
 			catch(Exception e) {

@@ -32,6 +32,7 @@ public class Receiver {
 	                connected=false;
 	        while(true) {
 	        	Frame frame =waitForFrame();
+	        	System.out.println("Received : " + frame.getMessage());
 	        	String message="N";
 	        	if(frame.isValid())
 	        	    message=frame.getMessage();
@@ -40,12 +41,20 @@ public class Receiver {
 	        	if(("I").equals(message.substring(0, 1))) {
 	        		if(message.length()>2&&(""+next).equals(message.substring(1, 2))){
 	        		    txt+=message.substring(2);//save
-	        		    output.writeUTF(new Frame("A"+next,true).getFrame());
+	        		    Frame f = new Frame("A"+next,true);
+	        		    output.writeUTF(f.getFrame());
+	        		    System.out.println("Sent : " + f.getMessage());
 	        		    next++;
-	        		}else
-	        			output.writeUTF(new Frame("R"+next,true).getFrame());
-	        	}else
-	        	    output.writeUTF(new Frame("A"+next,true).getFrame());
+	        		}else {
+	        			Frame f = new Frame("R"+next,true);
+	        			output.writeUTF(f.getFrame());
+	        			System.out.println("Sent : " + f.getMessage());
+	        		}		
+	        	}else {
+	        		Frame f = new Frame("A"+next,true);
+        			output.writeUTF(f.getFrame());
+        			System.out.println("Sent : " + f.getMessage());
+	        	}
 	        }
 	        
 	        // Save file

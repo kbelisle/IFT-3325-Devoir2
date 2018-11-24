@@ -76,6 +76,7 @@ public class Frame {
     	}
     	message=resp;
     	toCharacter();
+    	valid = true;
     }
     
     private String checksum(String msg) {
