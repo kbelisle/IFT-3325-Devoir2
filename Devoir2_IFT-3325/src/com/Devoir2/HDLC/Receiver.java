@@ -36,14 +36,14 @@ public class Receiver {
 	        	if("F0".equals(message))
 	        	    break;
 	        	if("C0".equals(message)&&lastMsg==null) {
-	        		lastMsg==new Frame("A0",true);
+	        		lastMsg=new Frame("A0",true);
 	        		output.writeUTF(lastMsg.getMessage());
 	    			timer=(new Date()).getTime();
 	        		System.out.println("Sent : " + lastMsg.getMessage());
 	        	}
 	        	if(lastMsg!=null) {
 	        		if("P0".equals(message)) {
-	        			lastMsg==new Frame("A"+next,true);
+	        			lastMsg=new Frame("A"+next,true);
 		        		output.writeUTF(lastMsg.getMessage());
 		    			timer=(new Date()).getTime();
 		        		System.out.println("Sent : " + lastMsg.getMessage());	
