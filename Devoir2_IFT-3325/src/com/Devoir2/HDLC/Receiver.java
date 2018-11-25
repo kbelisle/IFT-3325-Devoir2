@@ -6,7 +6,7 @@ import java.net.*;
 
 public class Receiver {
 	/*Attributes*/
-	boolean connected;
+	Frame lastMsg;
 	int next;
 	long timer;
 	String txt="";
@@ -24,36 +24,42 @@ public class Receiver {
 		// We need an arg to know the port. Need additionnal condition to know it's an int between some numbers
 		try {/*Connect to socket*/
 			server = new ServerSocket(port);
-	                socket = server.accept(); 
-	                input = new DataInputStream(socket.getInputStream());
-	                output = new DataOutputStream(socket.getOutputStream());
+	        socket = server.accept(); 
+	        input = new DataInputStream(socket.getInputStream());
+	        output = new DataOutputStream(socket.getOutputStream());
 
 	        // Simple logic loop
-	                connected=false;
 	        while(true) {
 	        	Frame frame =waitForFrame();
-	        	System.out.println("Received : " + frame.getMessage());
-	        	String message="N";
-	        	if(frame.isValid())
-	        	    message=frame.getMessage();
+	        	String message=frame.getMessage();
+	        	System.out.println("Received : " + message);
 	        	if("F0".equals(message))
 	        	    break;
-	        	if(("I").equals(message.substring(0, 1))) {
-	        		if(message.length()>2&&(""+next).equals(message.substring(1, 2))){
-	        		    txt+=message.substring(2);//save
-	        		    Frame f = new Frame("A"+next,true);
-	        		    output.writeUTF(f.getFrame());
-	        		    System.out.println("Sent : " + f.getMessage());
-	        		    next++;
-	        		}else {
-	        			Frame f = new Frame("R"+next,true);
-	        			output.writeUTF(f.getFrame());
-	        			System.out.println("Sent : " + f.getMessage());
-	        		}		
-	        	}else {
-	        		Frame f = new Frame("A"+next,true);
-        			output.writeUTF(f.getFrame());
-        			System.out.println("Sent : " + f.getMessage());
+	        	if("C0".equals(message)&&lastMsg==null) {
+	        		lastMsg==new Frame("A0",true);
+	        		output.writeUTF(lastMsg.getMessage());
+	    			timer=(new Date()).getTime();
+	        		System.out.println("Sent : " + lastMsg.getMessage());
+	        	}
+	        	if(lastMsg!=null) {
+	        		if("P0".equals(message)) {
+	        			lastMsg==new Frame("A"+next,true);
+		        		output.writeUTF(lastMsg.getMessage());
+		    			timer=(new Date()).getTime();
+		        		System.out.println("Sent : " + lastMsg.getMessage());	
+		        	}
+	        		if(message.length()>=2&&("I").equals(message.substring(0, 1))) {
+		        		if((""+next).equals(message.substring(1, 2))){
+		        		    txt+=message.substring(2);//save
+		        		    lastMsg = new Frame("A"+next,true);
+		        		    next=(next+1)%8;
+		        		}else{
+		        			lastMsg = new Frame("R"+next,true);
+		        		}
+		        		output.writeUTF(lastMsg.getFrame());
+		    			timer=(new Date()).getTime();
+		        		System.out.println("Sent : " + lastMsg.getMessage());		
+		        	}
 	        	}
 	        }
 	        
@@ -77,18 +83,21 @@ public class Receiver {
 	/*Methods*/
 	public Frame waitForFrame() {
 		try {
-		timer=(new Date()).getTime();
-	        while(input.available()<1) {
-	            long tmp=(new Date()).getTime();
-	            if(tmp-timer>=3000) {
-	            	if(connected) {
-	    	            System.out.println("sending A"+next);
-	            	    output.writeUTF(new Frame("A"+next,true).getFrame());
-	            	}
-	        	timer=tmp;
-	            }
-	        }
-	        return new Frame(input.readUTF(),false);
+			while(true) {
+				while(input.available()<1) {
+					long tmp=(new Date()).getTime();
+					if(tmp-timer>=3000) {
+						if(lastMsg!=null) {
+							System.out.println("sending "+lastMsg.getMessage());
+		            	    output.writeUTF(lastMsg.getFrame());
+		            	}
+		            	timer=tmp;
+		            }
+		        }
+		        Frame rsp=new Frame(input.readUTF(),false);
+		        if(rsp.isValid())
+		        	return rsp;
+			}
 		}catch(Exception e) {return new Frame("N0",true);}
 	}
 }
