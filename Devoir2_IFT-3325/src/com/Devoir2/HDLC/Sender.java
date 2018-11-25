@@ -16,17 +16,20 @@ import java.net.UnknownHostException;
 public class Sender {
 	/*Constant*/
 	private final static int DATA_SIZE_LIMIT = 100;
-	private final static int MAX_BUFFER_WINDOW_SIZE = 7;
+	private final static int MAX_BUFFER_WINDOW_SIZE = 8;
+	private final static int MAX_FRAME_COUNT = 7; /*2^3-1 = 7*/
 	private final static int MAX_WAIT_TIME = 3000;
 	private final static int MAX_ATTEMPT = 30;
+	private final static int ACK_FRAME_SIZE = 48;
 	/*Attributes*/
 	Socket s;
 	DataInputStream in;
 	DataOutputStream out;
 	BufferedReader file;
-	Frame[] frameBuffer = new Frame[7]; /*2^(3)-1 = 7*/
+	Frame[] frameBuffer = new Frame[MAX_BUFFER_WINDOW_SIZE];
 	int nextEmpty = 0;
 	int lastACK = MAX_BUFFER_WINDOW_SIZE - 1;
+	int frameCount = 0;
 	boolean sendingData = false;
 	
 	/*Properties*/
@@ -41,8 +44,7 @@ public class Sender {
 			/*Open File*/
 			File f = new File(fileName);
 			if(!f.exists() || !f.canRead()) throw new Exception("File doesn't exists or unreadable");
-			file = new BufferedReader(new FileReader(f));
-			
+			file = new BufferedReader(new FileReader(f));	
 		}
 		catch(UnknownHostException e) {
 			throw new Exception ("L'hote n'existe pas");
@@ -59,48 +61,58 @@ public class Sender {
 	private void waitForACK() throws Exception {
 		waitForACK(0);
 	}
-	private void waitForACK(int attempt) throws Exception {
-		if(attempt > MAX_ATTEMPT) {
-			throw new Exception("Sender ended after multiples (>30) "
-					+ "failed attempt to received ACKs/NACKs (on waitForACK();)");
+	private void waitForACK(int attempts) throws Exception {
+		if(attempts > MAX_ATTEMPT) {
+			/*max Attempts reached, */
+			throw new Exception("Max attempts to send reached, ending Sender");
 		}
 		Frame f = getNextFrame();
 		if(f == null) {
-			/*IF wait > 3s*/
-			resend();
-			waitForACK(attempt+1);
+			/*IF wait > 3s, send P-bit*/
+			sendPFrame(attempts);
 			return;
 		}
 		if(!f.isValid()) {
-			/*Invalid Frame, treat it as it never reached */
-			waitForACK(attempt+1);
+			/*Invalid Frame, send P-bit */
+			sendPFrame(attempts);
 			return;
 		}
 		char type = f.getMessage().charAt(0);
 		int num = Character.getNumericValue(f.getMessage().charAt(1));
 		if(num < 0 || num >= MAX_BUFFER_WINDOW_SIZE) {
-			/*Invalid Num, treat it as it never reached */
-			waitForACK(attempt+1);
+			/*Invalid Num, send P(lastACK+1) */
+			sendPFrame(attempts);
 			return;
 		}
+		/*Check if frame lastACK + 1 -> num aren't empty*/
+		int index = (lastACK+1)%MAX_BUFFER_WINDOW_SIZE;
+		do {
+			if(frameBuffer[index] == null) {
+				/*received ACK for non-existing frame*/
+				sendPFrame(attempts);
+				return;
+			}
+		}while((index++) % MAX_BUFFER_WINDOW_SIZE != num);
+		/*Resolve received Frame based on type*/
 		if(type == 'A') {
 			/*ACK(num) received*/
 			/*Remove from lastAck +1 to num*/
 			int i = (lastACK+1)%MAX_BUFFER_WINDOW_SIZE;
 			do {
 				frameBuffer[i] = null;
+				frameCount--;
 			}while((i++)%MAX_BUFFER_WINDOW_SIZE != num);
 			lastACK = num;
 		}
 		else if(type == 'R') {
 			/*NACK(num) received*/
 			resend();
-			waitForACK(attempt+1);
+			waitForACK(attempts+1);
 			return;
 		}
 		else {
-			/*Invalid Type, treat it as it never reached */
-			waitForACK(attempt+1);
+			/*Invalid Type, send P-bit */
+			sendPFrame(attempts);
 			return;
 		}
 	}
@@ -132,6 +144,7 @@ public class Sender {
 	public void disconnect() throws IOException {
 		Frame f = new Frame("F0",true);
 		out.writeUTF(f.getFrame());
+		System.out.println("Sent : " + f.getMessage());
 		/*TODO: Wait for UA??*/
 		sendingData = false;
 		in.close();
@@ -154,7 +167,7 @@ public class Sender {
 	
 	public void send() throws Exception {
 		while(sendingData) {
-			if(frameBuffer[nextEmpty] != null) {
+			if(frameCount == MAX_FRAME_COUNT) {
 				/*Buffer is full, wait for ACK*/
 				waitForACK();
 			}
@@ -169,6 +182,7 @@ public class Sender {
 			
 			Frame nextFrame = new Frame("I"+ Integer.toString(nextEmpty) + data,true);
 			frameBuffer[nextEmpty] = nextFrame;
+			frameCount++;
 			nextEmpty = (nextEmpty + 1) % MAX_BUFFER_WINDOW_SIZE;
 			
 			out.writeUTF(nextFrame.getFrame());
@@ -178,17 +192,17 @@ public class Sender {
 		while(true) {
 			waitForACK();
 			/*The buffer is empty, the receiver has received the entire file*/
-			if(lastACK + 1 == nextEmpty) break;
+			if(frameCount == 0) break;
 		}
 	}
-	private void resend() throws IOException {
+	private void resend() throws Exception {
 		/*Resend everything from lastAck+1 to nextEmpty -1*/
-		int i = (lastACK+1)%MAX_BUFFER_WINDOW_SIZE;
-		do {
+		for(int i = 0; i < frameCount; i++) {
+			int index = (lastACK+1+i)%MAX_BUFFER_WINDOW_SIZE;
 			out.writeUTF(frameBuffer[i].getFrame());
-			System.out.println("Re-sent : " + frameBuffer[i].getMessage());
-			i = (i+1)%MAX_BUFFER_WINDOW_SIZE;
-		}while(i != nextEmpty);
+			if(frameBuffer[index] == null) throw new Exception("Resend sent null");
+			System.out.println("Re-sent : " + frameBuffer[index].getMessage());
+		}
 	}
 	
 	private Frame getNextFrame() throws IOException {
@@ -196,7 +210,7 @@ public class Sender {
 		/*wait for 6 characters have been received*/
 		long timeout = System.currentTimeMillis() + MAX_WAIT_TIME;
 		/*6 octets = 48 bits*/
-		while(in.available() < 48) {
+		while(in.available() < ACK_FRAME_SIZE) {
 			if(System.currentTimeMillis() >= timeout) {
 				/*No Frame in the last MAX_WAIT_TIME seconds*/
 				return null;
@@ -205,5 +219,18 @@ public class Sender {
 		Frame f = new Frame(in.readUTF(),false);
 		System.out.println("Received: " + f.getMessage());
 		return f;
+	}
+	private void sendPFrame(int attempts) throws Exception {
+		/*Clear socket*/
+		while(in.available() >= ACK_FRAME_SIZE) {
+			in.readUTF();
+		}
+		/*sending P-bit frame*/
+		Frame f = new Frame("P0",true);
+		out.writeUTF(f.getFrame());
+		System.out.println("Sent P-Bit: " + f.getMessage());
+		
+		/*Wait for ACK and resynch*/
+		waitForACK(attempts + 1);
 	}
 }
