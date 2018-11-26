@@ -18,17 +18,19 @@ public class Receiver {
 	DataOutputStream output;
 	
 	/*Constructors*/
-	public Receiver(int port) {
+	public Receiver(int port) throws Exception {
 		// To cycle through 0-7. Next+7%8 should tell which value shouldn't appear.
 		next=0;
 		
 		// We need an arg to know the port. Need additionnal condition to know it's an int between some numbers
-		try {/*Connect to socket*/
-			server = new ServerSocket(port);
-	        socket = server.accept(); 
-	        input = new DataInputStream(socket.getInputStream());
-	        output = new DataOutputStream(socket.getOutputStream());
-
+		/*Connect to socket*/
+		server = new ServerSocket(port);
+        socket = server.accept(); 
+        input = new DataInputStream(socket.getInputStream());
+        output = new DataOutputStream(socket.getOutputStream());
+	}
+	/*Methods*/
+	public void listen() throws Exception {
 	        // Simple logic loop
 	        while(true) {
 	        	Frame frame =waitForFrame();
@@ -75,14 +77,9 @@ public class Receiver {
 	        output.close();
 	        socket.close();
 	        server.close();
-		} catch (NumberFormatException e) {
-			return;
-		} catch (IOException e) {
-			return;
-		}
 	}
-	/*Methods*/
-	public Frame waitForFrame() {
+	
+	private Frame waitForFrame() {
 		try {
 			while(true) {
 				while(input.available()<1) {
