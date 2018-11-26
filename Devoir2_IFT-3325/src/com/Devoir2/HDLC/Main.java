@@ -25,7 +25,8 @@ public class Main {
 		else if(args[0].compareTo("Receiver") == 0 && args.length==2) {
 			try {
 				int port = Integer.parseInt(args[1]);
-				new Receiver(port);
+				Receiver r = new Receiver(port);
+				r.listen();
 				System.out.println("Receiver process ended.");
 			}
 			catch(Exception e) {
