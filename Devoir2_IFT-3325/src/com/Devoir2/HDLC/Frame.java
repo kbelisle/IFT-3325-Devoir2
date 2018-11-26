@@ -3,12 +3,13 @@ package com.Devoir2.HDLC;
 import java.io.UnsupportedEncodingException;
 
 public class Frame {
+	// Partial Frames can exist as long as it's not a valid one.
 	private boolean valid;
 	private String message,encoded;
 	
 	public Frame(String msg,boolean toBeEncoded){
+		valid=true;
 		if(toBeEncoded) {
-			valid=true;
 			message=msg;
 			encode();
 		}else{
@@ -30,9 +31,11 @@ public class Frame {
 	}
     
     private void encode() {
-    	int cnt = 0;
+    	// The actual message (Type+Num+(Data)?)is converted to bytes then the checksum is added
     	String tmp=checksum(characterToByte());
     	
+    	// Bit stuffing
+    	int cnt = 0;
     	for(int i=0;i<tmp.length();i++) {
     		if (tmp.charAt(i)=='0')
     			cnt=0;
@@ -43,12 +46,22 @@ public class Frame {
     			}
     		}
     	}
+    	
+    	// Flags and final assignation is done here
     	encoded="01111110"+tmp+"01111110";
     }
     
     private void decode() {
+    	// Removing flags and verification.
     	int cnt = encoded.indexOf("01111110")+8;
+    	if(cnt==-1||encoded.substring(cnt).indexOf("01111110")==-1) {
+    		valid=false;
+    		message="";
+    		return;
+    	}
     	String tmp = encoded.substring(cnt,encoded.substring(cnt).indexOf("01111110")+cnt);
+    	
+    	// Removing bit stuffing
     	cnt = 0;
     	for(int i=0;i<tmp.length();i++) {
     		if (tmp.charAt(i)=='0')
@@ -65,6 +78,8 @@ public class Frame {
     			}
     		}
     	}
+    	
+    	// Checksum verification
     	if(tmp.length()<16) {
     		valid=false;
     		return;
@@ -75,20 +90,21 @@ public class Frame {
     		return;
     	}
     	message=resp;
+    	
+    	// Message changed from bytes to characters
     	toCharacter();
-    	valid = true;
     }
     
     private String checksum(String msg) {
     	String tmp=msg+"0000000000000000";
-    	char tmp1,tmp2,tmp3,tmp4;
+    	char tmp2,tmp3,tmp4;
     	for(int i = 0; i<tmp.length()-16;i++) {
-    		tmp1=tmp.charAt(i)=='0'?'1':'0';
-    		if(tmp1=='0') {
+    		// Le code générateur a été hardcodé ici. 10001000000100001
+    		if(tmp.charAt(i)=='1') {
     			tmp2=tmp.charAt(i+4)=='0'?'1':'0';
     			tmp3=tmp.charAt(i+11)=='0'?'1':'0';
     			tmp4=tmp.charAt(i+16)=='0'?'1':'0';
-    			tmp=tmp.substring(0, i)+tmp1+tmp.substring(i+1,i+4)+tmp2+tmp.substring(i+5,i+11)+tmp3+tmp.substring(i+12, i+16)+tmp4+tmp.substring(i+17);
+    			tmp=tmp.substring(0, i)+'0'+tmp.substring(i+1,i+4)+tmp2+tmp.substring(i+5,i+11)+tmp3+tmp.substring(i+12, i+16)+tmp4+tmp.substring(i+17);
     		}
     	}
     	return msg+tmp.substring(tmp.length()-16);
@@ -115,7 +131,7 @@ public class Frame {
 		return resp;
     }
     
-    public void toCharacter() {
+    private void toCharacter() {
     	byte[] resp=new byte[message.length()/8];
     	for(int i=0;i<resp.length;i++) {
     		String tmp=message.substring(i*8,i*8+8);
