@@ -99,7 +99,7 @@ public class Frame {
     	String tmp=msg+"0000000000000000";
     	char tmp2,tmp3,tmp4;
     	for(int i = 0; i<tmp.length()-16;i++) {
-    		// Le code gÃ©nÃ©rateur a Ã©tÃ© hardcodÃ© ici. 10001000000100001
+    		// Le code generateur a ete hardcode ici. 10001000000100001
     		if(tmp.charAt(i)=='1') {
     			tmp2=tmp.charAt(i+4)=='0'?'1':'0';
     			tmp3=tmp.charAt(i+11)=='0'?'1':'0';
