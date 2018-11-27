@@ -124,8 +124,12 @@ public class Sender {
 			throw new Exception("Sender ended after multiples (>30) "
 					+ "failed attempt to received ACKs/NACKs (on connect();)");
 		}
+		
 		Frame f = new Frame("C0",true);
 		out.writeUTF(f.getFrame());
+		out.flush();
+		System.out.println("Sent : C0");
+		System.out.flush();
 		/*Wait for RR*/
 		Frame ack = getNextFrame();
 		if(ack == null) {
@@ -144,8 +148,9 @@ public class Sender {
 	public void disconnect() throws IOException {
 		Frame f = new Frame("F0",true);
 		out.writeUTF(f.getFrame());
+		out.flush();
 		System.out.println("Sent : " + f.getMessage());
-		/*TODO: Wait for UA??*/
+		System.out.flush();
 		sendingData = false;
 		in.close();
 		out.close();
@@ -192,7 +197,9 @@ public class Sender {
 			nextEmpty = (nextEmpty + 1) % MAX_BUFFER_WINDOW_SIZE;
 			
 			out.writeUTF(nextFrame.getFrame());
+			out.flush();
 			System.out.println("Sent : " + nextFrame.getMessage());
+			System.out.flush();
 		}
 		/*All the data was sent at least once, waiting for all ACKs/NACKs*/
 		while(true) {
@@ -206,8 +213,10 @@ public class Sender {
 		for(int i = 0; i < frameCount; i++) {
 			int index = (lastACK+1+i)%MAX_BUFFER_WINDOW_SIZE;
 			out.writeUTF(frameBuffer[i].getFrame());
+			out.flush();
 			if(frameBuffer[index] == null) throw new Exception("Resend sent null");
 			System.out.println("Re-sent : " + frameBuffer[index].getMessage());
+			System.out.flush();
 		}
 	}
 	
@@ -224,6 +233,7 @@ public class Sender {
 		}
 		Frame f = new Frame(in.readUTF(),false);
 		System.out.println("Received: " + f.getMessage());
+		System.out.flush();
 		return f;
 	}
 	private void sendPFrame(int attempts) throws Exception {
@@ -234,8 +244,9 @@ public class Sender {
 		/*sending P-bit frame*/
 		Frame f = new Frame("P0",true);
 		out.writeUTF(f.getFrame());
+		out.flush();
 		System.out.println("Sent P-Bit: " + f.getMessage());
-		
+		System.out.flush();
 		/*Wait for ACK and resynch*/
 		waitForACK(attempts + 1);
 	}

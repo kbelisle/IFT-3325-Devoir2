@@ -14,6 +14,8 @@ import javax.imageio.stream.FileCacheImageInputStream;
 
 import com.Devoir2.HDLC.*;
 
+
+
 public class Scenario {
 	public static void main(String[] args) {
 		testFrame();
@@ -25,33 +27,43 @@ public class Scenario {
 		//Frame Unit test	
 		System.out.print("Test 1, no flags: ");
 		System.out.println(new Frame("0",false).isValid()?"X":"Success");
+		System.out.flush();
 		
 		System.out.print("Test 2, one flag: ");
 		System.out.println(new Frame("01111110",false).isValid()?"X":"Success");
+		System.out.flush();
 		
 		System.out.print("Test 3, only flags: ");
 		System.out.println(new Frame("0111111001111110",false).isValid()?"X":"Success");
+		System.out.flush();
 		
 		System.out.print("Test 4, only crc: ");
 		System.out.println(new Frame("01111110000000000000000001111110",false).isValid()?"X":"Success");
+		System.out.flush();
 		
 		System.out.print("Test 5, no Num: ");
 		System.out.println(new Frame(new Frame("A",true).getFrame(),false).isValid()?"X":"Success");
+		System.out.flush();
 		
 		System.out.print("Test 6, Num not a number 0-8: ");
 		System.out.println(new Frame(new Frame("Success",true).getFrame(),false).isValid()?"X":"Success");
+		System.out.flush();
 		
 		System.out.print("Test 7, CRC validity: ");
 		System.out.println("011111100010000000100000000000000000000001111110".equals(new Frame("  ",true).getFrame())?"X":"Success");
+		System.out.flush();
 		
 		System.out.print("Test 8, CRC validity: ");
 		System.out.println("011111100010000000100000001000101000010001111110".equals(new Frame("  ",true).getFrame())?"Success":"X");// Expected CRC
+		System.out.flush();
 		
 		System.out.print("Test 9, message consistency: ");
 		System.out.println("Success".equals(new Frame(new Frame("Success",true).getFrame(),false).getMessage())?"Success":"X");
+		System.out.flush();
 		
 		System.out.print("Test 10, bit stuffing: ");
 		System.out.println("01111110001111101001111101110100100001011101111110".equals(new Frame("??",true).getFrame())?"Success":"X");
+		System.out.flush();
 	}
 	
 	private static void testReceiver() {
@@ -80,15 +92,17 @@ public class Scenario {
 		}
 		/*Allow the console to catch-up*/
 		try {
-			TimeUnit.SECONDS.sleep(3);
+			Thread.sleep(100);
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
-		System.out.println("\n\n");
+		System.out.println("\n\n----------Receiver Test Results----------\n");
+		System.out.flush();
 		for(String res : results) {
 			System.out.println(res);
+			System.out.flush();
 		}
 	}
 	
@@ -98,27 +112,33 @@ public class Scenario {
 			Thread tr = new Thread() {
 				public void run() {
 					try {
-						new Receiver(8750 + testNumber).listen();
+						Receiver r = new Receiver(8750 + testNumber);
+						r.listen();
 					}
 					catch (Exception e) {
 						System.out.println("Receiver thread threw unexpected exception : " + e.getMessage());
+						System.out.flush();
 					}
 				}
 			};
 			tr.start();
 			/*Wait for server to start*/
-			Thread.sleep(1000);
+			Thread.sleep(100);
 			Socket s = new Socket("localhost",8750 + testNumber);
 			DataInputStream in = new DataInputStream(s.getInputStream());
 		    DataOutputStream out = new DataOutputStream(s.getOutputStream());
 	    	System.out.print("Test "+testNumber+", "+command[0]+": ");
 			for(int j=1;j<command.length;j++) {
-				if(!"w".equals(command[j]))
+				if(!"w".equals(command[j])) {
 					out.writeUTF(command[j]);
-	            long timer=new Date().getTime();
+					out.flush();
+				}
+				long timer=new Date().getTime();
 	            while(in.available()<1&&new Date().getTime()-timer<3000) {}
-	            if(in.available()>=1)
+	            if(in.available()>=1) {
 	            	System.out.println("Received from Receiver : " + new Frame(in.readUTF(),false).getMessage());
+	        		System.out.flush();
+	            }
 			}
 		    out.writeUTF(new Frame("F0",true).getFrame());
 		    out.close();
@@ -140,38 +160,42 @@ public class Scenario {
 				P0=new Frame("P0",true).getMessage(),
 				F0=new Frame("F0",true).getMessage();
 		String[][] liste= {
-				/*{"Retry connection","","w",C0,A0,F0},*/
+				{"Retry connection","","w",C0,A0,F0},
 				{"Lost ACK","abcdefghijabcdefghijabcdefghijabcdefghi"
 						+ "jabcdefghijabcdefghijabcdefghijabcdefghi"
 						+ "jabcdefghijabcdefghijz",C0,A0,I0,I1,A1,F0},
 				};	
 		ArrayList<String> results = new ArrayList<String>();
-		int testNumber = 11;
+		int testNumber = 18;
 		for(String[] s : liste) {
 			results.add("Test #" + testNumber + " " + s[0] + " : " + testSenderWithCommand(s,testNumber));
 			testNumber++;
 		}
 		//Allow the console to catch-up
 		try {
-			TimeUnit.SECONDS.sleep(3);
+			Thread.sleep(100);
 		} catch (InterruptedException e) {
 			/*Shouldn't happen in current context*/
 			System.out.println(e.getMessage());
 			return;
 		}
 		
-		System.out.println("\n\n----------Receiver Test Results----------\n");
+		System.out.println("\n\n----------Sender Test Results----------\n");
+		System.out.flush();
 		for(String res : results) {
 			System.out.println(res);
+    		System.out.flush();
 		}
 	}
 	
 	private static String testSenderWithCommand(String[] command, int testNumber) {
-		ServerSocket server;
-		Socket s;
-		DataInputStream in;
-		DataOutputStream out;
 		try {
+			ArrayList<String> remainingData = new ArrayList<String>();
+		    int index = 0;
+		    while (index < command[1].length()) {
+		    	remainingData.add(command[1].substring(index, Math.min(index + 100,command[1].length())));
+		        index += 100;
+		    }
 			/*Create command test file*/
 			String fileTxt = command[1];
 			String fileName = "test" + testNumber + ".txt";
@@ -183,60 +207,66 @@ public class Scenario {
 			f.createNewFile();
 			FileWriter fw = new FileWriter(f);
 			fw.write(fileTxt);
-			fw.close();
-			server = new ServerSocket(7750 + testNumber);	
+			fw.close();	
 			//Start a thread for the sender
 			Thread tr = new Thread() {
 				public void run() {
 					try {
-						Sender s = new Sender("localhost",7750 + testNumber,fileName);
+						Sender s = new Sender("localhost",7700 + testNumber,fileName);
 						/*Wait for server*/
-						Thread.sleep(1000);
+						Thread.sleep(100);
 						s.connect();
 						s.send();
 						s.disconnect();
 					}
 					catch (Exception e) {
 						System.out.println("Sender thread threw unexpected exception : " + e.getMessage());
+		        		System.out.flush();
 					}
 				}
 			};
+			ServerSocket server = new ServerSocket(7700 + testNumber);
 			tr.start();
-			s = server.accept();
-			in = new DataInputStream(s.getInputStream());
-		    out = new DataOutputStream(s.getOutputStream()); 
-		    String remainingData = command[1];  
+			Socket s = server.accept();
+			DataInputStream in = new DataInputStream(s.getInputStream());
+			DataOutputStream out = new DataOutputStream(s.getOutputStream());   
 	    	System.out.print("Test "+testNumber+", "+command[0]+": \n");
-	    	
+    		System.out.flush();
 			for(int j=2;j<command.length;j++) {
-				String expectedHeader = command[j];
 				/*Logic test*/
-				while(in.available() < 1) {
-						
-				}
+				while(in.available() < 1) {}
 				Frame frame = new Frame(in.readUTF(),false);
 				if(!frame.isValid()) {
 					throw new Exception("Invalid Frame received " + frame.getFrame());
 				}
 				String frameHeader = frame.getMessage().substring(0, 2);
 				if("w".equals(command[j])) {
-					Thread.sleep(3000);/*Wait 3s*/
+					/*Wait 3s*/
+					long timeout = System.currentTimeMillis() + 3000;
+					while(System.currentTimeMillis() >= timeout) {}
 					continue;
 				}
-				if(expectedHeader.charAt(0) == 'A' || expectedHeader.charAt(0) == 'R') {
-					/*Send ACK/NACK*/
-					String output = new Frame(expectedHeader,true).getFrame();
-					out.writeUTF(output);
+				if (command[j].charAt(0) == 'C') {
+					if(!command[j].equals(frameHeader)) {
+						throw new Exception("Must be connected first");
+					}
+					j++;/*Go next*/
 				}
-				else if(expectedHeader.equals(frameHeader)) {
+				if(command[j].charAt(0) == 'A' || command[j].charAt(0) == 'R') {
+					/*Send ACK/NACK*/
+					String output = new Frame(command[j],true).getFrame();
+					out.writeUTF(output);
+					out.flush();
+				}
+				else if(command[j].charAt(0) == 'I') {
 					String expectedData;
 					if(frame.getMessage().length() > 2) {
-						if(remainingData.length() > 100) {
-							expectedData = remainingData.substring(0,100);
-							remainingData = remainingData.substring(100);
+						if(remainingData.size() > 1) {
+							expectedData = remainingData.get(0);
+							remainingData.remove(0);
 						}
 						else {
-							expectedData = remainingData;
+							expectedData = remainingData.get(0);
 						}
 						String actualData = frame.getMessage().substring(2);
 						if(!expectedData.equals(actualData)) {
@@ -244,8 +274,11 @@ public class Scenario {
 						}
 					}
 				}
+				else if(command[j].charAt(0) == 'F') {
+					/*Check if buffer is empty, otherwise fail test*/
+				}
 				else {
-					throw new Exception("Expected : " + expectedHeader + ", Actual : " + frameHeader);
+					throw new Exception("Expected : " + command[j] + ", Actual : " + frameHeader);
 				}
 			}
 		    out.close();

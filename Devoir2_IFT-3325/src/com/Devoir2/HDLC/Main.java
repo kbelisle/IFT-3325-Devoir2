@@ -8,6 +8,7 @@ public class Main {
 		if(args[0].compareTo("Sender") == 0 && args.length == 5) {
 			if(args[4].compareTo("0") != 0) {
 				System.out.println("Only supports Go-Back-N");
+				System.out.flush();
 				return;
 			}
 			try {
@@ -17,9 +18,11 @@ public class Main {
 				s.send();
 				s.disconnect();
 				System.out.println("Sender process ended.");
+				System.out.flush();
 			}
 			catch(Exception e) {
 				System.out.println(e.getMessage());
+				System.out.flush();
 			}
 		}
 		else if(args[0].compareTo("Receiver") == 0 && args.length==2) {
@@ -31,10 +34,12 @@ public class Main {
 			}
 			catch(Exception e) {
 				System.out.println(e.getMessage());
+				System.out.flush();
 			}
 		}
 		else {
 			System.out.println("Invalid arguments");
+			System.out.flush();
 		}
 	}
 }

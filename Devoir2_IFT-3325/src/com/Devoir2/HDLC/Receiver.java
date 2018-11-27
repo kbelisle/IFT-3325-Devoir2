@@ -43,27 +43,33 @@ public class Receiver {
         		next=0;
         		lastMsg=new Frame("A0",true);
         		output.writeUTF(lastMsg.getFrame());
+        		output.flush();
     			timer=(new Date()).getTime();
         		System.out.println("Sent : " + lastMsg.getMessage());
+        		System.out.flush();
         	}
         	if(lastMsg!=null) {
         		if("P0".equals(message)) {
         			lastMsg=new Frame("A"+next,true);
 	        		output.writeUTF(lastMsg.getFrame());
+	        		output.flush();
 	    			timer=(new Date()).getTime();
 	        		System.out.println("Sent : " + lastMsg.getMessage());	
+	        		System.out.flush();
 	        	}
         		if(message.length()>=2&&("I").equals(message.substring(0, 1))) {
 	        		if((""+next).equals(message.substring(1, 2))){
 	        		    txt+=message.substring(2);//save
-	        		    next=(next+1)%8;
 	        		    lastMsg = new Frame("A"+next,true);
+	        		    next=(next+1)%8;
 	        		}else{
 	        			lastMsg = new Frame("R"+next,true);
 	        		}
 	        		output.writeUTF(lastMsg.getFrame());
+	        		output.flush();
 	    			timer=(new Date()).getTime();
-	        		System.out.println("Sent : " + lastMsg.getMessage());		
+	        		System.out.println("Sent : " + lastMsg.getMessage());	
+	        		System.out.flush();
 	        	}
         	}
         }
@@ -89,7 +95,9 @@ public class Receiver {
 					if(tmp-timer>=3000) {
 						if(lastMsg!=null) {
 							System.out.println("sending "+lastMsg.getMessage());
+							System.out.flush();
 		            	    output.writeUTF(lastMsg.getFrame());
+		            	    output.flush();
 		            	}
 		            	timer=tmp;
 		            }
