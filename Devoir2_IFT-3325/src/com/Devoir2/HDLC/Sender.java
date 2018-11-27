@@ -175,7 +175,13 @@ public class Sender {
 			String data = getDataFromFile();
 			if(data.length() == 0) {
 				/*No Data left*/
-				waitForACK();
+				if(frameCount == 0) {
+					/*Buffer is empty*/
+					/*=>No ACK to wait*/
+					return;
+				}
+				else
+					waitForACK();
 			}
 			/*if data.length() < DATA_SIZE_LIMIT, we are sending the last frame*/
 			sendingData = data.length() == DATA_SIZE_LIMIT;
