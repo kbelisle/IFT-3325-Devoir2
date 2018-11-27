@@ -56,10 +56,10 @@ public class Scenario {
 				I1=new Frame("I1",true).getFrame(),
 				A0=new Frame("A0",true).getFrame(),
 				P0=new Frame("P0",true).getFrame(),
-				F0=new Frame("F1",true).getFrame();
+				F0=new Frame("F0",true).getFrame();
 		String[][] liste= {
 				{"No connection",I0,I0,F0},
-				{"Noise",A0,C0,I0,I1,F0,A0},
+				{"Noise",A0,C0,A0,I0,A0,I1,A0,F0},
 				{"Corruption",C0,A0,F0},
 				{"Out of order",C0,I1,I1,F0},
 				{"Repetition",C0,I0,I0,I0,I0,F0},
@@ -81,7 +81,7 @@ public class Scenario {
 			e.printStackTrace();
 		}
 		
-		System.out.println("\n\n\n");
+		System.out.println("\n\n");
 		for(String res : results) {
 			System.out.println(res);
 		}
@@ -125,17 +125,17 @@ public class Scenario {
 		}
 	}
 	
-	/*public static void testSender() {
+	public static void testSender() {
 		//Sender Unit test
 		String C0=new Frame("C0",true).getFrame(),
 				I0=new Frame("I0X",true).getFrame(),
 				I1=new Frame("I1",true).getFrame(),
 				A0=new Frame("A0",true).getFrame(),
 				P0=new Frame("P0",true).getFrame(),
-				F0=new Frame("F1",true).getFrame();
+				F0=new Frame("F0",true).getFrame();
 		String[][] liste= {
 				{"No connection",I0,I0,F0},
-				{"Noise",A0,C0,I0,I1,F0,A0},
+				{"Noise",A0,C0,A0,I0,A0,I1,A0,F0},
 				{"Corruption",C0,A0,F0},
 				{"Out of order",C0,I1,I1,F0},
 				{"Repetition",C0,I0,I0,I0,I0,F0},
@@ -201,5 +201,5 @@ public class Scenario {
 		} catch (Exception e) {
 			return "Failed : " + e.getMessage();
 		}
-	}*/
+	}
 }
