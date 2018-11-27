@@ -54,7 +54,7 @@ public class Frame {
     private void decode() {
     	// Removing flags and verification.
     	int cnt = encoded.indexOf("01111110")+8;
-    	if(cnt==-1||encoded.substring(cnt).indexOf("01111110")==-1) {
+    	if(cnt==7||encoded.substring(cnt).indexOf("01111110")==-1) {
     		valid=false;
     		message="";
     		return;
@@ -99,7 +99,7 @@ public class Frame {
     	String tmp=msg+"0000000000000000";
     	char tmp2,tmp3,tmp4;
     	for(int i = 0; i<tmp.length()-16;i++) {
-    		// Le code générateur a été hardcodé ici. 10001000000100001
+    		// Le code gÃ©nÃ©rateur a Ã©tÃ© hardcodÃ© ici. 10001000000100001
     		if(tmp.charAt(i)=='1') {
     			tmp2=tmp.charAt(i+4)=='0'?'1':'0';
     			tmp3=tmp.charAt(i+11)=='0'?'1':'0';
@@ -132,6 +132,10 @@ public class Frame {
     }
     
     private void toCharacter() {
+    	if(message.length()<16||Math.floor((message.length()/8)*8)!=message.length()) {
+    		valid=false;
+    		return;
+    	}
     	byte[] resp=new byte[message.length()/8];
     	for(int i=0;i<resp.length;i++) {
     		String tmp=message.substring(i*8,i*8+8);
@@ -147,6 +151,11 @@ public class Frame {
     	}
 		try {
 			message= new String(resp,"UTF-8");
+	    	boolean j=false;
+	    	for(int i=0;i<8;i++) {
+	    		j=j||(""+i).equals(message.substring(1,2));
+	    	}
+	    	valid=valid&&j;
 		} catch (UnsupportedEncodingException e) {
 			valid=false;
 		}
