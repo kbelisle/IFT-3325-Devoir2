@@ -43,14 +43,14 @@ public class Receiver {
 	        		lastMsg=new Frame("A0",true);
 	        		output.writeUTF(lastMsg.getFrame());
 	    			timer=(new Date()).getTime();
-	        		//System.out.println("Sent : " + lastMsg.getMessage());
+	        		System.out.println("Sent : " + lastMsg.getMessage());
 	        	}
 	        	if(lastMsg!=null) {
 	        		if("P0".equals(message)) {
 	        			lastMsg=new Frame("A"+next,true);
 		        		output.writeUTF(lastMsg.getFrame());
 		    			timer=(new Date()).getTime();
-		        		//System.out.println("Sent : " + lastMsg.getMessage());	
+		        		System.out.println("Sent : " + lastMsg.getMessage());	
 		        	}
 	        		if(message.length()>=2&&("I").equals(message.substring(0, 1))) {
 		        		if((""+next).equals(message.substring(1, 2))){
@@ -62,7 +62,7 @@ public class Receiver {
 		        		}
 		        		output.writeUTF(lastMsg.getFrame());
 		    			timer=(new Date()).getTime();
-		        		//System.out.println("Sent : " + lastMsg.getMessage());		
+		        		System.out.println("Sent : " + lastMsg.getMessage());		
 		        	}
 	        	}
 	        }
