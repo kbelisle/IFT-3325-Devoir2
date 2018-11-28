@@ -84,24 +84,26 @@ public class Sender {
 			sendPFrame(attempts);
 			return;
 		}
-		/*Check if frame lastACK + 1 -> num aren't empty*/
-		int index = (lastACK+1)%MAX_BUFFER_WINDOW_SIZE;
+		/*Check if frame lastACK -> num - 1 aren't empty*/
+		int index = lastACK;
 		do {
 			if(frameBuffer[index] == null) {
 				/*received ACK for non-existing frame*/
 				sendPFrame(attempts);
 				return;
 			}
-		}while((index++) % MAX_BUFFER_WINDOW_SIZE != num);
+			index = index+1 % MAX_BUFFER_WINDOW_SIZE;
+		}while(index % MAX_BUFFER_WINDOW_SIZE != num);
 		/*Resolve received Frame based on type*/
 		if(type == 'A') {
 			/*ACK(num) received*/
 			/*Remove from lastAck +1 to num*/
-			int i = (lastACK+1)%MAX_BUFFER_WINDOW_SIZE;
+			int i = lastACK;
 			do {
 				frameBuffer[i] = null;
 				frameCount--;
-			}while((i++)%MAX_BUFFER_WINDOW_SIZE != num);
+				i = (i+1)%MAX_BUFFER_WINDOW_SIZE;
+			}while(i != num);
 			lastACK = num;
 		}
 		else if(type == 'R') {
@@ -137,6 +139,7 @@ public class Sender {
 			connect(attempt+1);
 		}
 		else if(ack.getMessage().compareTo("A0") == 0) {
+			lastACK = 0;
 			sendingData = true;
 		}
 		else {

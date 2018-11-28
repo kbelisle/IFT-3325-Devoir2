@@ -60,8 +60,8 @@ public class Receiver {
         		if(message.length()>=2&&("I").equals(message.substring(0, 1))) {
 	        		if((""+next).equals(message.substring(1, 2))){
 	        		    txt+=message.substring(2);//save
-	        		    lastMsg = new Frame("A"+next,true);
 	        		    next=(next+1)%8;
+	        		    lastMsg = new Frame("A"+next,true);
 	        		}else{
 	        			lastMsg = new Frame("R"+next,true);
 	        		}

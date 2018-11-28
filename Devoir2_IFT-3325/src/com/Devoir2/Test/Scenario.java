@@ -104,6 +104,8 @@ public class Scenario {
 			System.out.println(res);
 			System.out.flush();
 		}
+		System.out.println("\n\n");
+		System.out.flush();
 	}
 	
 	private static String testReceiverWithCommand(String[] command, int testNumber) {
@@ -186,6 +188,7 @@ public class Scenario {
 			System.out.println(res);
     		System.out.flush();
 		}
+		
 	}
 	
 	private static String testSenderWithCommand(String[] command, int testNumber) {
