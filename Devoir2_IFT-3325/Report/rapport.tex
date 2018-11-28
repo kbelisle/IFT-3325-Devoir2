@@ -44,7 +44,7 @@
 \newcommand{\Author}{Kevin Belisle}
 \newcommand{\Authorr}{Olivier Bélec}
 \newcommand{\MatriculeAuthor}{20018469}
-\newcommand{\MatriculeAuthorr}{00000000}
+\newcommand{\MatriculeAuthorr}{20074601}
 \newcommand{\Teacher}{Abdelhakim Hafid}
 \newcommand{\ClassNum}{IFT-3325}
 \newcommand{\ClassName}{Téléinformatique}
@@ -226,4 +226,22 @@
 	\end{spacing}
 	\subsection*{Main}
 	Point d'entrée de l'application, valide les arguments d'entrée et créer le Sender ou Receiver selon les arguments d'entrée
+	\newpage
+	\subsection*{Scénario}
+	Classe englobant les scénarios de test pour Frame, Receiver et Sender.
+	\subsubsection*{Méthodes}
+	\begin{lstlisting}
+	private static void testFrame()
+	private static void testReceiver()
+	private static void testSender()
+	\end{lstlisting}
+	Méthode englobant les tests pour l'objet spécifié.
+	\begin{lstlisting}
+	private static String testReceiverWithCommand()
+	\end{lstlisting}
+	Créé un environment pour un test du Receiver. Il crée un thread pour le Receiver et utilise un Sender bidon qui envoie des trames de test
+	\begin{lstlisting}
+	private static String testSenderWithCommand()
+	\end{lstlisting}
+	Créé un environment pour un test du Sender. Il crée un thread pour le Sender et utilise un Receiver bidon qui envoie des trames de test.
 \end{document}
