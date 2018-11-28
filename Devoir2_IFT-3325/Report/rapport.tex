@@ -100,12 +100,11 @@
 	private final static int MAX_ATTEMPT = 30;
 	private final static int ACK_FRAME_SIZE = 48;
 	\end{lstlisting}
-	\textbf{DATA\_SIZE\_LIMIT} : Le nombre de caractère que nous envoyions par trame. Elle sert à simuler un maximum sur le data pour chaque trame.\\\\
+	\textbf{DATA\_SIZE\_LIMIT} : Le nombre de caractère que nous envoyons par trame. Elle sert à simuler un maximum sur le data pour chaque trame.\\\\
 	\textbf{MAX\_BUFFER\_WINDOW\_SIZE} : La grandeur maximum du buffer pour les trames ($2^3$, car nous utilisons 3 bits pour numéroter les trames). \\\\
 	\textbf{MAX\_FRAME\_COUNT} : Le nombre maximum de trame en mémoire à un moment donné ($2^3-1$ pour Go-Back-N).\\\\
 	\textbf{MAX\_WAIT\_TIME} : Le temps maximum d'attente pour le temporisateur (3s pour ce TP).\\\\
-	\textbf{MAX\_ATTEMPT} : Le nombre maximum d'essai avant de conclure que la connexion avec le serveur est perdu.\\\\
-	\textbf{ACK\_FRAME\_SIZE} : la taille des trames de réponse (Elles sont tout le temps de taille 6 octets pour ce TP, donc 6octets*8bits/octets = 48 bits).
+	\textbf{MAX\_ATTEMPT} : Le nombre maximum d'essai avant de conclure que la connexion avec le serveur est perdu.
 	\subsubsection*{Attributs}
 	\begin{lstlisting}
 	Socket s;
@@ -142,15 +141,15 @@
 	\begin{lstlisting}
 	private String getDataFromFile()
 	\end{lstlisting}
-	Lit du flux du ficher le nombre de caractère maximal spécifié par la constante DATA\_SIZE\_LIMIT
+	Lit du flux du fichier au plus le nombre de caractère maximal spécifié par la constante DATA\_SIZE\_LIMIT
 	\begin{lstlisting}
 	public void send()
 	\end{lstlisting}
-	Commencer l'envoie des données vers le serveur.
+	Débute l'envoi des données vers le Receiver.
 	\begin{lstlisting}
 	private void resend()
 	\end{lstlisting}
-	Réenvoie toutes les trames qui sont en mémoire.
+	Réenvoi toutes les trames qui sont en mémoire.
 	\begin{lstlisting}
 	private Frame getNextFrame()
 	\end{lstlisting}
@@ -182,11 +181,11 @@
 	\begin{lstlisting}
 	public void listen()
 	\end{lstlisting}
-	Écoute sur le socket pour des trames, sauvegarde le data des trames et envoie les trames de réponse appropriés
+	Écoute sur le socket pour des trames, sauvegarde les données reçues des trames et envoie les trames de réponse appropriées
 	\begin{lstlisting}
 	private Frame waitForFrame()
 	\end{lstlisting}
-	Bloque et attends (si nécessaire) pour des trames du Sender et les retourne pour un futur traitement.
+	Bloque et attend (si nécessaire) pour des trames du Sender et les retournent pour un futur traitement.
 	\subsection*{Frame}
 	\subsubsection*{Attributs}
 	\begin{lstlisting}
@@ -201,7 +200,7 @@
 	\begin{lstlisting}
 	public Frame(String msg,boolean toBeEncoded)
 	\end{lstlisting}
-	Instancie une trame. En fonction de (toBeEncoded), nous encoderons la trame et nous la décoderons sinon.
+	Instancie une trame. En fonction de (toBeEncoded), nous encoderons la trame ou nous la décoderons sinon.
 	\subsubsection*{Méthodes}
 	\begin{lstlisting}
 	private void encode()
@@ -218,11 +217,11 @@
 	\begin{lstlisting}
 	private String characterToByte()
 	\end{lstlisting}
-	Transforme une chaîne de caractères en octets.
+	Transforme une chaîne de caractère en octets.
 	\begin{lstlisting}
 	public void toCharacter()
 	\end{lstlisting}
-	Transforme des octets en caractères.
+	Transforme des octets en une chaîne de caractère.
 	\end{spacing}
 	\subsection*{Main}
 	Point d'entrée de l'application, valide les arguments d'entrée et créer le Sender ou Receiver selon les arguments d'entrée
