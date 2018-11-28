@@ -1,4 +1,4 @@
-package com.Devoir2.HDLC;
+package HDLC;
 
 public class Main {
 	public static void main(String[] args) {

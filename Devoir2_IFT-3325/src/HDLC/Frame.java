@@ -1,4 +1,4 @@
-package com.Devoir2.HDLC;
+package HDLC;
 
 import java.io.UnsupportedEncodingException;
 

@@ -1,4 +1,4 @@
-package com.Devoir2.Test;
+package Test;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -8,11 +8,8 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.concurrent.TimeUnit;
 
-import javax.imageio.stream.FileCacheImageInputStream;
-
-import com.Devoir2.HDLC.*;
+import HDLC.*;
 
 
 
@@ -64,6 +61,9 @@ public class Scenario {
 		System.out.print("Test 10, bit stuffing: ");
 		System.out.println("01111110001111101001111101110100100001011101111110".equals(new Frame("??",true).getFrame())?"Success":"X");
 		System.out.flush();
+		
+		System.out.println("\n");
+		System.out.flush();
 	}
 	
 	private static void testReceiver() {
@@ -86,7 +86,7 @@ public class Scenario {
 		ArrayList<String> results = new ArrayList<String>();
 		int testNumber = 11;
 		for(String[] s : liste) {
-			results.add("Test #" + testNumber + " " + s[0] + " : " + testReceiverWithCommand(s,testNumber));
+			results.add("Test #" + testNumber + " " + s[0] + " : " + testReceiverWithCommand(s,testNumber) + "\n");
 			testNumber++;
 
 		}
@@ -152,25 +152,31 @@ public class Scenario {
 		}
 	}
 	
-	public static void testSender() {
+	private static void testSender() {
 		//Sender Unit test
 		String C0=new Frame("C0",true).getMessage(),
 				I0=new Frame("I0",true).getMessage(),
 				I1=new Frame("I1",true).getMessage(),
 				A0=new Frame("A0",true).getMessage(),
 				A1=new Frame("A1",true).getMessage(),
+				A2=new Frame("A2",true).getMessage(),
 				P0=new Frame("P0",true).getMessage(),
+				R1=new Frame("R1",true).getMessage(),
+				INVALID="0111000011100011111110",/*flag|0|flag invalid frame*/
 				F0=new Frame("F0",true).getMessage();
 		String[][] liste= {
 				{"Retry connection","","w",C0,A0,F0},
 				{"Lost ACK","abcdefghijabcdefghijabcdefghijabcdefghi"
 						+ "jabcdefghijabcdefghijabcdefghijabcdefghi"
-						+ "jabcdefghijabcdefghijz",C0,A0,I0,I1,A1,F0},
+						+ "jabcdefghijabcdefghijz",C0,A0,I0,I1,A2,F0},
+				{"Receiving R1", "z", C0,A0,I0,R1,I0,A1,F0},
+				{"Receiving Invalid Frame","z",C0,A0,I0,INVALID,P0,A1,F0},
+				{"Receiving Invalid Num","z",C0,A0,I0,A2,P0,A1,F0}
 				};	
 		ArrayList<String> results = new ArrayList<String>();
 		int testNumber = 18;
 		for(String[] s : liste) {
-			results.add("Test #" + testNumber + " " + s[0] + " : " + testSenderWithCommand(s,testNumber));
+			results.add("Test #" + testNumber + " " + s[0] + " : " + testSenderWithCommand(s,testNumber) + "\n");
 			testNumber++;
 		}
 		//Allow the console to catch-up
@@ -191,16 +197,16 @@ public class Scenario {
 		
 	}
 	
-	private static String testSenderWithCommand(String[] command, int testNumber) {
+	private static String testSenderWithCommand(String[] commands, int testNumber) {
 		try {
 			ArrayList<String> remainingData = new ArrayList<String>();
 		    int index = 0;
-		    while (index < command[1].length()) {
-		    	remainingData.add(command[1].substring(index, Math.min(index + 100,command[1].length())));
+		    while (index < commands[1].length()) {
+		    	remainingData.add(commands[1].substring(index, Math.min(index + 100,commands[1].length())));
 		        index += 100;
 		    }
 			/*Create command test file*/
-			String fileTxt = command[1];
+			String fileTxt = commands[1];
 			String fileName = "test" + testNumber + ".txt";
 			File f = new File(fileName);
 			f.setExecutable(true,false);
@@ -233,9 +239,9 @@ public class Scenario {
 			Socket s = server.accept();
 			DataInputStream in = new DataInputStream(s.getInputStream());
 			DataOutputStream out = new DataOutputStream(s.getOutputStream());   
-	    	System.out.print("Test "+testNumber+", "+command[0]+": \n");
+	    	System.out.print("Test "+testNumber+", "+commands[0]+": \n");
     		System.out.flush();
-			for(int j=2;j<command.length;j++) {
+			for(int j=2;j<commands.length;j++) {
 				/*Logic test*/
 				while(in.available() < 1) {}
 				Frame frame = new Frame(in.readUTF(),false);
@@ -243,25 +249,37 @@ public class Scenario {
 					throw new Exception("Invalid Frame received " + frame.getFrame());
 				}
 				String frameHeader = frame.getMessage().substring(0, 2);
-				if("w".equals(command[j])) {
+				if("w".equals(commands[j])) {
 					/*Wait 3s*/
 					long timeout = System.currentTimeMillis() + 3000;
 					while(System.currentTimeMillis() >= timeout) {}
 					continue;
 				}
-				if (command[j].charAt(0) == 'C') {
-					if(!command[j].equals(frameHeader)) {
+				if (commands[j].charAt(0) == 'C') {
+					if(!commands[j].equals(frameHeader)) {
 						throw new Exception("Must be connected first");
 					}
-					j++;/*Go next*/
+					if(commands[j+1].charAt(0) == 'A' || commands[j+1].charAt(0) == 'R') {
+						j++;
+						/*Send ACK/NACK*/
+						String output = new Frame(commands[j],true).getFrame();
+						out.writeUTF(output);
+						out.flush();
+					}
 				}
-				if(command[j].charAt(0) == 'A' || command[j].charAt(0) == 'R') {
-					/*Send ACK/NACK*/
-					String output = new Frame(command[j],true).getFrame();
-					out.writeUTF(output);
-					out.flush();
+				else if(commands[j].charAt(0) == 'P') {
+					if(!"P0".equals(frameHeader)) {
+						throw new Exception("Expecting P0 frame");
+					}
+					if(commands[j+1].charAt(0) == 'A' || commands[j+1].charAt(0) == 'R') {
+						j++;
+						/*Send ACK/NACK*/
+						String output = new Frame(commands[j],true).getFrame();
+						out.writeUTF(output);
+						out.flush();
+					}
 				}
-				else if(command[j].charAt(0) == 'I') {
+				else if(commands[j].charAt(0) == 'I') {
 					String expectedData;
 					if(frame.getMessage().length() > 2) {
 						if(remainingData.size() > 1) {
@@ -276,12 +294,26 @@ public class Scenario {
 							throw new Exception("Data not equal Expected : " + expectedData + ", Actual : " + actualData);
 						}
 					}
+					if(commands[j+1].charAt(0) == 'A' || commands[j+1].charAt(0) == 'R') {
+						j++;
+						/*Send ACK/NACK*/
+						String output = new Frame(commands[j],true).getFrame();
+						out.writeUTF(output);
+						out.flush();
+					}
+					else if(commands[j+1].charAt(0) == '0') {
+						j++;
+						/*Testing invalid ACK frame*/
+						out.writeUTF(commands[j]);
+						out.flush();
+					}
 				}
-				else if(command[j].charAt(0) == 'F') {
+				else if(commands[j].charAt(0) == 'F') {
 					/*Check if buffer is empty, otherwise fail test*/
+					if(in.available() > 1) throw new Exception("Useless Frame in buffer");
 				}
 				else {
-					throw new Exception("Expected : " + command[j] + ", Actual : " + frameHeader);
+					throw new Exception("Expected : " + commands[j] + ", Actual : " + frameHeader);
 				}
 			}
 		    out.close();

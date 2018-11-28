@@ -1,15 +1,12 @@
-package com.Devoir2.HDLC;
+package HDLC;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
@@ -20,7 +17,6 @@ public class Sender {
 	private final static int MAX_FRAME_COUNT = 7; /*2^3-1 = 7*/
 	private final static int MAX_WAIT_TIME = 3000;
 	private final static int MAX_ATTEMPT = 30;
-	private final static int ACK_FRAME_SIZE = 48;
 	/*Attributes*/
 	Socket s;
 	DataInputStream in;
@@ -212,9 +208,9 @@ public class Sender {
 		}
 	}
 	private void resend() throws Exception {
-		/*Resend everything from lastAck+1 to nextEmpty -1*/
+		/*Resend everything from lastAck to nextEmpty -1*/
 		for(int i = 0; i < frameCount; i++) {
-			int index = (lastACK+1+i)%MAX_BUFFER_WINDOW_SIZE;
+			int index = (lastACK+i)%MAX_BUFFER_WINDOW_SIZE;
 			out.writeUTF(frameBuffer[i].getFrame());
 			out.flush();
 			if(frameBuffer[index] == null) throw new Exception("Resend sent null");
@@ -228,7 +224,7 @@ public class Sender {
 		/*wait for 6 characters have been received*/
 		long timeout = System.currentTimeMillis() + MAX_WAIT_TIME;
 		/*6 octets = 48 bits*/
-		while(in.available() < ACK_FRAME_SIZE) {
+		while(in.available() == 0) {
 			if(System.currentTimeMillis() >= timeout) {
 				/*No Frame in the last MAX_WAIT_TIME seconds*/
 				return null;
@@ -241,7 +237,7 @@ public class Sender {
 	}
 	private void sendPFrame(int attempts) throws Exception {
 		/*Clear socket*/
-		while(in.available() >= ACK_FRAME_SIZE) {
+		while(in.available() > 0) {
 			in.readUTF();
 		}
 		/*sending P-bit frame*/
